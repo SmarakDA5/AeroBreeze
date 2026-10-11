@@ -12,6 +12,7 @@ interface MapProps {
   checkpoints: Waypoint[];
   isPinModeActive: boolean;
   onMapClick: (coords: { lat: number; lng: number }) => void;
+  isVisible?: boolean;
 }
 
 export default function Map({
@@ -22,6 +23,7 @@ export default function Map({
   checkpoints,
   isPinModeActive,
   onMapClick,
+  isVisible = true,
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -54,13 +56,22 @@ export default function Map({
     };
   }, []);
 
-  // Change cursor when in click-to-pin mode
+  // Force resize whenever map visibility toggles (crucial for mobile drawer / tab switches)
+  useEffect(() => {
+    if (mapRef.current && isVisible) {
+      setTimeout(() => {
+        mapRef.current?.resize();
+      }, 150);
+    }
+  }, [isVisible]);
+
+  // Adjust cursor style when "Click to drop pin" is active
   useEffect(() => {
     if (!mapRef.current) return;
     mapRef.current.getCanvas().style.cursor = isPinModeActive ? "crosshair" : "";
   }, [isPinModeActive]);
 
-  // Update User GPS Marker
+  // Render User Location Pin
   useEffect(() => {
     if (mapRef.current && currentLocation) {
       if (!userMarkerRef.current) {
@@ -76,16 +87,14 @@ export default function Map({
     }
   }, [currentLocation]);
 
-  // Render Checkpoint Markers on the Map
+  // Render Checkpoint Markers
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // Clear existing markers
     checkpointMarkersRef.current.forEach((m) => m.remove());
     checkpointMarkersRef.current = [];
 
-    // Add updated markers
     checkpoints.forEach((wp, index) => {
       const isStart = index === 0;
       const isEnd = index === checkpoints.length - 1 && checkpoints.length > 1;
@@ -156,9 +165,9 @@ export default function Map({
         (b: any, coord: any) => b.extend(coord),
         new maplibregl.LngLatBounds(coordinates[0], coordinates[0])
       );
-      map.fitBounds(bounds, { padding: 90, duration: 1500 });
+      map.fitBounds(bounds, { padding: 80, duration: 1200 });
     } catch (e) {
-      console.warn("Unable to fit route bounds", e);
+      console.warn("Could not fit route bounds", e);
     }
   }, [routeGeojson]);
 
