@@ -23,7 +23,7 @@ import {
   Clock,
   Route,
   Map as MapIcon,
-  ArrowLeft,
+  LayoutDashboard,
   Wind,
 } from "lucide-react";
 
@@ -49,7 +49,7 @@ export default function Home() {
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Wake up Render free instance on load
+  // Wake up sleeping Render free instance on load
   useEffect(() => {
     fetch(`${backendUrl}/health`).catch(() => {});
   }, [backendUrl]);
@@ -126,7 +126,7 @@ export default function Home() {
     setSearchResults([]);
   };
 
-  // Map Click (Drops pin when click mode is active)
+  // Map Click
   const handleMapClick = (coords: { lat: number; lng: number }) => {
     if (!isPinModeActive && mode !== "A_TO_B") return;
 
@@ -181,7 +181,6 @@ export default function Home() {
 
       const data: RouteResponse = await res.json();
       setRouteData(data);
-      // Auto open map on mobile when route is ready
       if (window.innerWidth < 1024) {
         setShowMobileMap(true);
       }
@@ -194,47 +193,58 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen w-screen overflow-hidden bg-nordic-bg font-sans flex flex-col lg:flex-row">
+    <main className="h-[100dvh] w-screen overflow-hidden bg-nordic-bg font-sans flex flex-col lg:flex-row relative">
       {/* ======================================================== */}
-      {/* LEFT PANEL: DASHBOARD & CONTROLS (Visible on PC & Mobile) */}
+      {/* LEFT PANEL: DASHBOARD & CONTROLS */}
       {/* ======================================================== */}
       <section
-        className={`w-full lg:w-[480px] xl:w-[520px] h-full flex flex-col justify-between border-r border-nordic-border bg-white/90 backdrop-blur-md z-20 transition-all duration-300 ${
+        className={`w-full lg:w-[480px] xl:w-[520px] h-full flex flex-col border-r border-nordic-border bg-white/95 z-20 transition-all duration-200 ${
           showMobileMap ? "hidden lg:flex" : "flex"
         }`}
       >
         {/* Top Header */}
-        <header className="px-6 py-4 border-b border-nordic-border/60 flex items-center justify-between shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-full bg-nordic-sageLight flex items-center justify-center">
-              <Footprints className="w-5 h-5 text-nordic-pine" />
+        <header className="px-5 py-3.5 border-b border-nordic-border/60 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-full bg-nordic-sageLight flex items-center justify-center">
+              <Footprints className="w-4 h-4 text-nordic-pine" />
             </div>
             <div>
-              <h1 className="font-semibold text-nordic-charcoal text-base leading-tight">
+              <h1 className="font-semibold text-nordic-charcoal text-sm sm:text-base leading-tight">
                 AeroBreeze
               </h1>
-              <p className="text-xs text-nordic-sage">Nordic Clean-Air Navigator</p>
+              <p className="text-[11px] text-nordic-sage">Nordic Clean-Air Navigator</p>
             </div>
           </div>
 
-          <button
-            onClick={handleLocateUser}
-            disabled={isLocating}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-nordic-glacier text-nordic-pine hover:bg-nordic-sageLight transition"
-          >
-            <Navigation className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
-            <span>{isLocating ? "Locating..." : "My Spot"}</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleLocateUser}
+              disabled={isLocating}
+              className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-medium rounded-full bg-nordic-glacier text-nordic-pine hover:bg-nordic-sageLight transition"
+            >
+              <Navigation className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
+              <span>{isLocating ? "Locating..." : "My Spot"}</span>
+            </button>
+
+            {/* Header Switch for Mobile */}
+            <button
+              onClick={() => setShowMobileMap(true)}
+              className="lg:hidden flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-full bg-nordic-pine text-white shadow-sm"
+            >
+              <MapIcon className="w-3.5 h-3.5" />
+              <span>Map</span>
+            </button>
+          </div>
         </header>
 
-        {/* Scrollable Setup & Stats Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        {/* Scrollable Dashboard Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-28 lg:pb-6">
           {/* Activity Selector */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-nordic-charcoal/70 uppercase tracking-wider">
               Activity Type
             </label>
-            <div className="grid grid-cols-3 gap-2 bg-nordic-glacier/60 p-1.5 rounded-2xl">
+            <div className="grid grid-cols-3 gap-2 bg-nordic-glacier/60 p-1 rounded-2xl">
               {[
                 { id: "WALK", label: "Walk", icon: Footprints },
                 { id: "RUN", label: "Run", icon: Flame },
@@ -246,7 +256,7 @@ export default function Home() {
                   <button
                     key={item.id}
                     onClick={() => setActivity(item.id as ActivityType)}
-                    className={`flex items-center justify-center space-x-1.5 py-2.5 rounded-xl text-xs font-medium transition ${
+                    className={`flex items-center justify-center space-x-1.5 py-2 rounded-xl text-xs font-medium transition ${
                       active
                         ? "bg-white text-nordic-pine shadow-sm font-semibold"
                         : "text-nordic-charcoal/70 hover:text-nordic-charcoal"
@@ -289,9 +299,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mode Configuration: Loop vs Checkpoints */}
+          {/* Configuration Card */}
           {mode === "CIRCULAR_LOOP" ? (
-            <div className="p-4 rounded-2xl bg-nordic-glacier/30 border border-nordic-border/60 space-y-3">
+            <div className="p-3.5 rounded-2xl bg-nordic-glacier/30 border border-nordic-border/60 space-y-2.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-nordic-charcoal/70">Loop Target Distance</span>
                 <span className="font-semibold text-nordic-pine text-sm">{distanceKm} km</span>
@@ -305,8 +315,8 @@ export default function Home() {
                 onChange={(e) => setDistanceKm(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-nordic-glacier rounded-lg appearance-none cursor-pointer accent-nordic-pine"
               />
-              <div className="flex justify-between items-center text-[11px] text-nordic-charcoal/50 pt-1">
-                <span>Starts and ends at your spot</span>
+              <div className="flex justify-between items-center text-[11px] text-nordic-charcoal/50 pt-0.5">
+                <span>Starts & returns to your spot</span>
                 <button
                   onClick={() => setRandomSeed((s) => s + 1)}
                   className="flex items-center space-x-1 text-nordic-pine hover:underline"
@@ -317,8 +327,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            /* Checkpoint Configuration */
-            <div className="p-4 rounded-2xl bg-nordic-glacier/30 border border-nordic-border/60 space-y-3">
+            <div className="p-3.5 rounded-2xl bg-nordic-glacier/30 border border-nordic-border/60 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-nordic-charcoal">Manage Route Stops</span>
                 <span className="text-[11px] text-nordic-pine bg-nordic-sageLight px-2 py-0.5 rounded-full font-medium">
@@ -326,7 +335,6 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Pin Drop & GPS toggles */}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   onClick={() => setIsPinModeActive(!isPinModeActive)}
@@ -348,7 +356,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Nominatim Search */}
               <form onSubmit={handleSearchPlaces} className="relative">
                 <input
                   type="text"
@@ -375,10 +382,9 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Checkpoint list */}
               <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
                 {checkpoints.length === 0 ? (
-                  <p className="text-[11px] text-nordic-charcoal/50 italic py-2 text-center">
+                  <p className="text-[11px] text-nordic-charcoal/50 italic py-1.5 text-center">
                     No checkpoints added yet. Drop pins or search.
                   </p>
                 ) : (
@@ -415,9 +421,9 @@ export default function Home() {
             <span>{isLoading ? "Calculating Clean Route..." : "Generate Optimized Route"}</span>
           </button>
 
-          {/* Live Stats & Clean Air Inhalation Card */}
+          {/* Live Stats */}
           {routeData ? (
-            <div className="p-4 rounded-2xl bg-nordic-sageLight/40 border border-nordic-border/70 space-y-3">
+            <div className="p-3.5 rounded-2xl bg-nordic-sageLight/40 border border-nordic-border/70 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-nordic-charcoal uppercase tracking-wider">
                   Clean-Air Telemetry
@@ -429,7 +435,7 @@ export default function Home() {
 
               <div>
                 <div className="flex items-baseline space-x-1.5">
-                  <span className="text-3xl font-light text-nordic-charcoal">
+                  <span className="text-2xl font-light text-nordic-charcoal">
                     {routeData.total_inhaled_dose_ug}
                   </span>
                   <span className="text-xs text-nordic-charcoal/60 font-medium">µg PM2.5 dose</span>
@@ -458,67 +464,71 @@ export default function Home() {
 
               <div className="flex items-center space-x-2 text-[11px] text-nordic-pine bg-white/60 p-2 rounded-xl">
                 <ShieldCheck className="w-4 h-4 text-nordic-pine shrink-0" />
-                <span>Green corridor path prioritized over heavy motor roads.</span>
+                <span>Green canopy corridor prioritized.</span>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-2xl border border-dashed border-nordic-border text-center py-6">
-              <Wind className="w-6 h-6 text-nordic-sage mx-auto mb-1.5 opacity-60" />
-              <p className="text-xs text-nordic-charcoal/60">Ready to calculate</p>
+            <div className="p-3.5 rounded-2xl border border-dashed border-nordic-border text-center py-5">
+              <Wind className="w-5 h-5 text-nordic-sage mx-auto mb-1 opacity-60" />
+              <p className="text-xs text-nordic-charcoal/60 font-medium">Ready to calculate</p>
               <p className="text-[11px] text-nordic-charcoal/40">
-                Choose your parameters and hit generate to view clean-air stats.
+                Choose parameters and tap generate to see telemetry.
               </p>
             </div>
           )}
         </div>
-
-        {/* Mobile View Map Button (Pinned to Bottom on Mobile Only) */}
-        <div className="p-4 border-t border-nordic-border/60 lg:hidden">
-          <button
-            onClick={() => setShowMobileMap(true)}
-            className="w-full py-2.5 bg-nordic-glacier text-nordic-pine hover:bg-nordic-sageLight rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition"
-          >
-            <MapIcon className="w-4 h-4" />
-            <span>View Live Map</span>
-          </button>
-        </div>
       </section>
 
       {/* ======================================================== */}
-      {/* RIGHT PANEL: LIVE MAP (Persistent on PC, Fullscreen on Mobile) */}
+      {/* FLOATING MOBILE ACTION PILL (Always Visible on Mobile) */}
+      {/* ======================================================== */}
+      {!showMobileMap && (
+        <div className="fixed bottom-4 inset-x-4 z-40 lg:hidden">
+          <button
+            onClick={() => setShowMobileMap(true)}
+            className="w-full py-3.5 bg-nordic-pine text-white rounded-2xl text-xs font-semibold shadow-xl flex items-center justify-center space-x-2 active:scale-95 transition"
+          >
+            <MapIcon className="w-4 h-4" />
+            <span>View Live Map {routeData ? "(Route Ready)" : ""}</span>
+          </button>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* RIGHT PANEL: LIVE MAP */}
       {/* ======================================================== */}
       <section
-        className={`flex-1 h-full relative transition-all duration-300 ${
+        className={`flex-1 h-full relative transition-all duration-200 ${
           showMobileMap
             ? "fixed inset-0 z-50 flex flex-col bg-nordic-bg"
             : "hidden lg:block"
         }`}
       >
-        {/* Mobile Header to Unview / Close Map */}
+        {/* Mobile Floating Back Button */}
         {showMobileMap && (
           <div className="absolute top-4 left-4 z-20 lg:hidden">
             <button
               onClick={() => setShowMobileMap(false)}
-              className="flex items-center space-x-2 px-3 py-2 bg-white/95 backdrop-blur-md border border-nordic-border text-nordic-charcoal text-xs font-semibold rounded-full shadow-md active:scale-95 transition"
+              className="flex items-center space-x-2 px-3.5 py-2 bg-white/95 backdrop-blur-md border border-nordic-border text-nordic-charcoal text-xs font-semibold rounded-full shadow-lg active:scale-95 transition"
             >
-              <ArrowLeft className="w-4 h-4 text-nordic-pine" />
-              <span>Back to Dashboard</span>
+              <LayoutDashboard className="w-4 h-4 text-nordic-pine" />
+              <span>Back to Controls</span>
             </button>
           </div>
         )}
 
-        {/* Mobile Floating Mini Stats Bar when viewing map */}
+        {/* Mobile Floating Telemetry Strip on Map */}
         {showMobileMap && routeData && (
-          <div className="absolute bottom-6 left-4 right-4 z-20 lg:hidden">
-            <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-nordic-border flex items-center justify-between">
+          <div className="absolute bottom-5 inset-x-4 z-20 lg:hidden">
+            <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-nordic-border flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-nordic-charcoal/60">Inhaled PM2.5</p>
+                <p className="text-[10px] text-nordic-charcoal/60">Inhaled Dose</p>
                 <p className="text-sm font-semibold text-nordic-pine">
-                  {routeData.total_inhaled_dose_ug} µg
+                  {routeData.total_inhaled_dose_ug} µg PM2.5
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-nordic-charcoal/60">Route Specs</p>
+                <p className="text-[10px] text-nordic-charcoal/60">Trip</p>
                 <p className="text-xs font-medium text-nordic-charcoal">
                   {routeData.total_distance_km} km • {routeData.total_duration_mins} min
                 </p>
@@ -527,7 +537,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* The Live Interactive Map Canvas */}
+        {/* The Live Interactive Map */}
         <Map
           center={center}
           zoom={13}
